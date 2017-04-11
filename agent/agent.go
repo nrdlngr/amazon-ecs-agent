@@ -153,21 +153,6 @@ func _main() int {
 			return exitcodes.ExitTerminal
 		}
 
-		if previousCluster != "" {
-			// TODO Handle default cluster in a sane and unified way across the codebase
-			configuredCluster := cfg.Cluster
-			if configuredCluster == "" {
-				log.Debug("Setting cluster to default; none configured")
-				configuredCluster = config.DefaultClusterName
-			}
-			if previousCluster != configuredCluster {
-				log.Criticalf("Data mismatch; saved cluster '%v' does not match configured cluster '%v'. Perhaps you want to delete the configured checkpoint file?", previousCluster, configuredCluster)
-				return exitcodes.ExitTerminal
-			}
-			cfg.Cluster = previousCluster
-			log.Infof("Restored cluster '%v'", cfg.Cluster)
-		}
-
 		if instanceIdentityDoc, err := ec2MetadataClient.InstanceIdentityDocument(); err == nil {
 			currentEc2InstanceID = instanceIdentityDoc.InstanceId
 		} else {
@@ -183,6 +168,21 @@ func _main() int {
 			// Use the values we loaded if there's no issue
 			containerInstanceArn = previousContainerInstanceArn
 			taskEngine = previousTaskEngine
+		}
+				
+		if previousCluster != "" {
+			// TODO Handle default cluster in a sane and unified way across the codebase
+			configuredCluster := cfg.Cluster
+			if configuredCluster == "" {
+				log.Debug("Setting cluster to default; none configured")
+				configuredCluster = config.DefaultClusterName
+			}
+			if previousCluster != configuredCluster {
+				log.Criticalf("Data mismatch; saved cluster '%v' does not match configured cluster '%v'. Perhaps you want to delete the configured checkpoint file?", previousCluster, configuredCluster)
+				return exitcodes.ExitTerminal
+			}
+			cfg.Cluster = previousCluster
+			log.Infof("Restored cluster '%v'", cfg.Cluster)
 		}
 	} else {
 		log.Info("Checkpointing not enabled; a new container instance will be created each time the agent is run")
